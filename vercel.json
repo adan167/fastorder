@@ -1,0 +1,10 @@
+{
+  "framework": null,
+  "buildCommand": "pnpm run build:vercel",
+  "outputDirectory": "dist/vercel",
+  "rewrites": [
+    { "source": "/cliente", "destination": "/cliente/index.html" },
+    { "source": "/cocina", "destination": "/cocina/index.html" },
+    { "source": "/administracion", "destination": "/administracion/index.html" }
+  ]
+}

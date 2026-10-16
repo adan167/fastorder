@@ -12,6 +12,7 @@
     "build:kitchen": "ng build fastorder-kitchen",
     "build:admin": "ng build fastorder-admin",
     "build:all": "pnpm run build:client && pnpm run build:kitchen && pnpm run build:admin",
+    "build:vercel": "ng build fastorder-client --base-href /cliente/ && ng build fastorder-kitchen --base-href /cocina/ && ng build fastorder-admin --base-href /administracion/ && node scripts/prepare-vercel-output.mjs",
     "watch": "ng build fastorder-client --watch --configuration development"
   },
   "private": true,
