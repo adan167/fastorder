@@ -1,0 +1,13 @@
+{
+  "name": "FastOrder · Menú",
+  "short_name": "FastOrder",
+  "description": "Pide tus favoritos en FastOrder.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E63946",
+  "icons": [
+    { "src": "fastorder-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

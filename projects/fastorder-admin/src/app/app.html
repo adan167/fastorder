@@ -1,0 +1,601 @@
+<div class="admin-root" [class.dark]="darkMode">
+  @if (!isAuthenticated) {
+    <main class="auth-page">
+      <section class="auth-card">
+        <a class="brand auth-brand"
+          ><span class="brand-icon">F</span
+          ><span>fast<span>order</span><small>ADMINISTRACIÓN</small></span></a
+        >
+        <span class="eyebrow">ÁREA DE OPERACIONES</span>
+        <h1>Acceso administrador.</h1>
+        <p>Ingresa para gestionar el catálogo, pedidos y reportes.</p>
+        <form (ngSubmit)="submitAuth()">
+          <label
+            >Correo electrónico<input
+              [(ngModel)]="authEmail"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              placeholder="admin@empresa.com"
+          /></label>
+          <label
+            >Contraseña<input
+              [(ngModel)]="authPassword"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              minlength="6"
+              required
+              placeholder="Mínimo 6 caracteres"
+          /></label>
+          @if (authError) {
+            <p class="auth-error" role="alert">{{ authError }}</p>
+          }
+          <button class="primary full" type="submit">Entrar al panel →</button>
+        </form>
+        <div class="demo-credentials">
+          <b>Cuenta de demostración</b><span>admin&#64;fastorder.demo · admin123</span
+          ><button (click)="useDemoAccount()">Usar cuenta demo</button>
+        </div>
+        <p class="security-note">
+          Autenticación demostrativa local; no usar estas cuentas para información real.
+        </p>
+        <button class="theme-button auth-theme" (click)="toggleTheme()">
+          {{ darkMode ? '☀ Tema claro' : '☾ Tema oscuro' }}
+        </button>
+      </section>
+    </main>
+  }
+  <div [hidden]="!isAuthenticated">
+    <div class="admin-layout">
+      <aside class="sidebar">
+        <a class="brand"
+          ><span class="brand-icon">F</span
+          ><span>fast<span>order</span><small>ADMIN · DEMO</small></span></a
+        >
+        <span class="menu-label">MENÚ PRINCIPAL</span>
+        <button [class.active]="activeTab === 'dashboard'" (click)="activeTab = 'dashboard'">
+          <span>▦</span> Dashboard
+        </button>
+        <button [class.active]="activeTab === 'products'" (click)="activeTab = 'products'">
+          <span>◈</span> Productos
+        </button>
+        <button [class.active]="activeTab === 'orders'" (click)="activeTab = 'orders'">
+          <span>▤</span> Pedidos <i>{{ orders.length }}</i>
+        </button>
+        <button [class.active]="activeTab === 'reports'" (click)="activeTab = 'reports'">
+          <span>▥</span> Reportes
+        </button>
+        <div class="sidebar-bottom">
+          <div class="demo-avatar">FO</div>
+          <div>
+            <b>{{ accountName }}</b
+            ><small>Administrador local</small>
+          </div>
+          <button class="logout-button" (click)="logout()" aria-label="Cerrar sesión">↪</button>
+        </div>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <div class="crumb">
+            FastOrder <span>/</span>
+            <b>{{
+              activeTab === 'dashboard'
+                ? 'Dashboard'
+                : activeTab === 'products'
+                  ? 'Productos'
+                  : activeTab === 'orders'
+                    ? 'Pedidos'
+                    : 'Reportes'
+            }}</b>
+          </div>
+          <div class="top-actions">
+            <span class="demo-chip">● MODO DEMOSTRACIÓN</span
+            ><button
+              class="theme-button"
+              (click)="toggleTheme()"
+              [attr.aria-label]="darkMode ? 'Activar tema claro' : 'Activar tema oscuro'"
+            >
+              {{ darkMode ? '☀' : '☾' }}</button
+            ><span class="divider"></span><span class="today">Miércoles, 14 de octubre de 2026</span
+            ><span class="avatar">AF</span>
+          </div>
+        </header>
+        <main>
+          @if (activeTab === 'dashboard') {
+            <section class="page-heading">
+              <div>
+                <span class="eyebrow">RESUMEN DE OPERACIONES</span>
+                <h1>¡Hola, equipo! <span>✳</span></h1>
+                <p>Aquí tienes el pulso de FastOrder. Cifras de muestra para esta demostración.</p>
+              </div>
+              <button class="outline" (click)="exportReport()">↓ &nbsp; Descargar reporte</button>
+            </section>
+            <section class="metrics">
+              <article class="metric">
+                <div>
+                  <span>VENTAS DEMO</span
+                  ><b>{{ revenue | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</b
+                  ><small class="positive">↗ &nbsp;Calculado con pedidos mostrados</small>
+                </div>
+                <div class="metric-icon red">S/</div>
+              </article>
+              <article class="metric">
+                <div>
+                  <span>PEDIDOS REGISTRADOS</span><b>{{ orders.length }}</b
+                  ><small class="positive">↗ &nbsp;Datos de esta sesión</small>
+                </div>
+                <div class="metric-icon yellow">▤</div>
+              </article>
+              <article class="metric">
+                <div>
+                  <span>TICKET PROMEDIO</span
+                  ><b>{{ averageTicket | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</b
+                  ><small>Sobre el conjunto de pedidos</small>
+                </div>
+                <div class="metric-icon blue">◉</div>
+              </article>
+              <article class="metric">
+                <div>
+                  <span>PEDIDOS ENTREGADOS</span><b>{{ completedOrders }}</b
+                  ><small>De {{ orders.length }} pedidos de muestra</small>
+                </div>
+                <div class="metric-icon green">✓</div>
+              </article>
+            </section>
+            <section class="dashboard-grid">
+              <article class="card sales-card">
+                <div class="card-title">
+                  <div>
+                    <h2>Ventas de la semana</h2>
+                    <p>Índice relativo de ventas · datos simulados</p>
+                  </div>
+                  <span class="period">Últimos 7 días</span>
+                </div>
+                <div class="chart">
+                  <div class="y-axis">
+                    <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
+                  </div>
+                  <div class="bars">
+                    @for (day of sales; track day.day) {
+                      <div class="bar-col">
+                        <div class="bar-value">{{ day.value }}</div>
+                        <div class="bar" [style.height.%]="day.value"></div>
+                        <small>{{ day.day }}</small>
+                      </div>
+                    }
+                  </div>
+                </div>
+                <div class="chart-caption">
+                  <span>● &nbsp;Ventas simuladas</span><small>Índice, no soles reales</small>
+                </div>
+              </article>
+              <article class="card category-card">
+                <div class="card-title">
+                  <div>
+                    <h2>Catálogo</h2>
+                    <p>Estado de los productos locales</p>
+                  </div>
+                  <button class="link-button" (click)="activeTab = 'products'">
+                    Ver catálogo →
+                  </button>
+                </div>
+                <div class="category-ring" [style.--active-ratio]="activeProductRatio + '%'">
+                  <div>
+                    <b>{{ products.length }}</b
+                    ><small>productos</small>
+                  </div>
+                </div>
+                <div class="legend">
+                  <span
+                    ><i class="dot red"></i>Activos
+                    <b>{{ products.filter((p) => p.active).length }}</b></span
+                  ><span
+                    ><i class="dot gray"></i>Inactivos
+                    <b>{{ products.filter((p) => !p.active).length }}</b></span
+                  >
+                </div>
+              </article>
+            </section>
+            <section class="card recent-card">
+              <div class="card-title">
+                <div>
+                  <h2>Pedidos recientes</h2>
+                  <p>Últimos pedidos de demostración</p>
+                </div>
+                <button class="link-button" (click)="activeTab = 'orders'">Ver todos →</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>PEDIDO</th>
+                      <th>CLIENTE</th>
+                      <th>FECHA</th>
+                      <th>ESTADO</th>
+                      <th>TOTAL</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (order of orders.slice(0, 4); track order.id) {
+                      <tr>
+                        <td>
+                          <b>{{ order.id }}</b>
+                        </td>
+                        <td>{{ order.customer }}</td>
+                        <td>{{ order.date }}</td>
+                        <td>
+                          <span
+                            class="status"
+                            [class]="'status ' + order.status.toLowerCase().replace(' ', '-')"
+                            >{{ order.status }}</span
+                          >
+                        </td>
+                        <td>
+                          <b>{{ order.total | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</b>
+                        </td>
+                        <td><button class="dots" (click)="selectedOrder = order">···</button></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
+
+          @if (activeTab === 'products') {
+            <section class="page-heading">
+              <div>
+                <span class="eyebrow">GESTIÓN DEL CATÁLOGO</span>
+                <h1>Productos<span>.</span></h1>
+                <p>Administra precios, disponibilidad y existencias.</p>
+              </div>
+              <button class="primary" (click)="openNewProduct()">＋ &nbsp; Nuevo producto</button>
+            </section>
+            <section class="card management-card">
+              <div class="list-toolbar">
+                <label class="search"
+                  >⌕
+                  <input
+                    [(ngModel)]="search"
+                    placeholder="Buscar producto o categoría..."
+                    aria-label="Buscar productos" /></label
+                ><span class="total-label">{{ visibleProducts.length }} productos</span>
+              </div>
+              @if (visibleProducts.length) {
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>PRODUCTO</th>
+                        <th>CATEGORÍA</th>
+                        <th>PRECIO</th>
+                        <th>STOCK</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (product of visibleProducts; track product.id) {
+                        <tr>
+                          <td class="product-cell">
+                            <img
+                              [src]="product.image"
+                              [alt]="product.name"
+                              (error)="imageFallback($event)"
+                            /><b>{{ product.name }}</b>
+                          </td>
+                          <td>{{ product.category }}</td>
+                          <td>
+                            <b>{{
+                              product.price | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE'
+                            }}</b>
+                          </td>
+                          <td>
+                            <span [class.low-stock]="product.stock < 5"
+                              >{{ product.stock }} unidades</span
+                            >
+                          </td>
+                          <td>
+                            <span
+                              class="status"
+                              [class.available]="product.active"
+                              [class.unavailable]="!product.active"
+                              >{{ product.active ? 'Activo' : 'Inactivo' }}</span
+                            >
+                          </td>
+                          <td>
+                            <button class="action-link" (click)="editProduct(product)">
+                              Editar</button
+                            ><button
+                              class="action-delete"
+                              (click)="deleteProduct(product)"
+                              aria-label="Eliminar producto"
+                            >
+                              ×
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <div class="empty">
+                  <h3>No encontramos productos</h3>
+                  <p>Prueba con otra búsqueda.</p>
+                </div>
+              }
+            </section>
+          }
+
+          @if (activeTab === 'orders') {
+            <section class="page-heading">
+              <div>
+                <span class="eyebrow">VENTAS Y OPERACIONES</span>
+                <h1>Pedidos<span>.</span></h1>
+                <p>Busca pedidos, revisa su detalle y actualiza el estado.</p>
+              </div>
+              <button class="outline" (click)="exportReport()">↓ &nbsp; Exportar CSV</button>
+            </section>
+            <section class="card management-card">
+              <div class="list-toolbar">
+                <label class="search"
+                  >⌕
+                  <input
+                    [(ngModel)]="orderSearch"
+                    placeholder="Buscar por número, cliente o estado..."
+                    aria-label="Buscar pedidos" /></label
+                ><span class="total-label">{{ visibleOrders.length }} pedidos</span>
+              </div>
+              @if (visibleOrders.length) {
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>PEDIDO</th>
+                        <th>CLIENTE</th>
+                        <th>FECHA</th>
+                        <th>DETALLE</th>
+                        <th>ESTADO</th>
+                        <th>TOTAL</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (order of visibleOrders; track order.id) {
+                        <tr>
+                          <td>
+                            <b>{{ order.id }}</b>
+                          </td>
+                          <td>{{ order.customer }}</td>
+                          <td>{{ order.date }}</td>
+                          <td class="items-cell">{{ order.items }}</td>
+                          <td>
+                            <select
+                              class="status-select"
+                              [ngModel]="order.status"
+                              (ngModelChange)="setOrderStatus(order, $event)"
+                              [attr.aria-label]="'Estado de ' + order.id"
+                            >
+                              @for (status of statuses; track status) {
+                                <option [value]="status">{{ status }}</option>
+                              }
+                            </select>
+                          </td>
+                          <td>
+                            <b>{{
+                              order.total | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE'
+                            }}</b>
+                          </td>
+                          <td>
+                            <button
+                              class="dots"
+                              (click)="selectedOrder = order"
+                              aria-label="Ver detalle"
+                            >
+                              ···
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <div class="empty">
+                  <h3>No hay pedidos que coincidan</h3>
+                  <p>Cambia el texto de búsqueda e inténtalo de nuevo.</p>
+                </div>
+              }
+            </section>
+          }
+
+          @if (activeTab === 'reports') {
+            <section class="page-heading">
+              <div>
+                <span class="eyebrow">ANÁLISIS LOCAL</span>
+                <h1>Reportes<span>.</span></h1>
+                <p>Resumen calculado únicamente sobre los pedidos de demostración.</p>
+              </div>
+              <button class="primary" (click)="exportReport()">↓ &nbsp; Descargar CSV</button>
+            </section>
+            <section class="report-summary">
+              <article class="card">
+                <span>VENTA TOTAL DEMO</span
+                ><b>{{ revenue | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</b
+                ><small>{{ orders.length }} pedidos incluidos</small>
+              </article>
+              <article class="card">
+                <span>VALOR PROMEDIO</span
+                ><b>{{ averageTicket | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</b
+                ><small>Ticket promedio del conjunto</small>
+              </article>
+              <article class="card">
+                <span>ENTREGADOS</span><b>{{ completedOrders }} / {{ orders.length }}</b
+                ><small>Conteo actual de estados</small>
+              </article>
+            </section>
+            <section class="card report-orders">
+              <div class="card-title">
+                <div>
+                  <h2>Detalle de ventas</h2>
+                  <p>Exportación local · CSV compatible con hojas de cálculo</p>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>PEDIDO</th>
+                      <th>CLIENTE</th>
+                      <th>FECHA</th>
+                      <th>ESTADO</th>
+                      <th>VENTA (PEN)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (order of orders; track order.id) {
+                      <tr>
+                        <td>{{ order.id }}</td>
+                        <td>{{ order.customer }}</td>
+                        <td>{{ order.date }}</td>
+                        <td>{{ order.status }}</td>
+                        <td>{{ order.total | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <p class="report-warning">
+              ⚠ Estos datos son ficticios y se conservan solo en la sesión del navegador. No
+              representan ventas reales.
+            </p>
+          }
+          <footer>
+            FastOrder Admin <span>·</span> Entorno de demostración · Los cambios no se sincronizan
+            automáticamente con las otras aplicaciones.
+          </footer>
+        </main>
+      </div>
+
+      @if (formOpen) {
+        <div class="modal-backdrop" (click)="formOpen = false">
+          <section
+            class="modal"
+            (click)="$event.stopPropagation()"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Formulario de producto"
+          >
+            <div class="modal-head">
+              <div>
+                <span class="eyebrow">{{
+                  editingId === null ? 'AGREGAR AL CATÁLOGO' : 'EDITAR CATÁLOGO'
+                }}</span>
+                <h2>{{ editingId === null ? 'Nuevo producto' : 'Editar producto' }}</h2>
+              </div>
+              <button class="close" (click)="formOpen = false" aria-label="Cerrar">×</button>
+            </div>
+            <form (ngSubmit)="saveProduct()">
+              <label
+                >Nombre del producto<input
+                  name="name"
+                  [(ngModel)]="draft.name"
+                  required
+                  maxlength="60"
+                  placeholder="Ej. Burger especial" /></label
+              ><label
+                >Categoría<select name="category" [(ngModel)]="draft.category" required>
+                  <option>Hamburguesas</option>
+                  <option>Papas</option>
+                  <option>Bebidas</option>
+                  <option>Postres</option>
+                </select></label
+              >
+              <div class="form-row">
+                <label
+                  >Precio (S/)<input
+                    name="price"
+                    [(ngModel)]="draft.price"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    required /></label
+                ><label
+                  >Stock<input
+                    name="stock"
+                    [(ngModel)]="draft.stock"
+                    type="number"
+                    min="0"
+                    step="1"
+                    required
+                /></label>
+              </div>
+              <label
+                >URL de imagen<input
+                  name="image"
+                  [(ngModel)]="draft.image"
+                  type="url"
+                  placeholder="https://..." /></label
+              ><label class="check-label"
+                ><input name="active" [(ngModel)]="draft.active" type="checkbox" /> Producto
+                disponible para venta</label
+              >
+              <div class="form-actions">
+                <button type="button" class="outline" (click)="formOpen = false">Cancelar</button
+                ><button type="submit" class="primary">
+                  {{ editingId === null ? 'Crear producto' : 'Guardar cambios' }}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      }
+      @if (selectedOrder) {
+        <div class="modal-backdrop" (click)="selectedOrder = null">
+          <section
+            class="modal detail-modal"
+            (click)="$event.stopPropagation()"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Detalle del pedido"
+          >
+            <div class="modal-head">
+              <div>
+                <span class="eyebrow">DETALLE DEL PEDIDO</span>
+                <h2>{{ selectedOrder.id }}</h2>
+              </div>
+              <button class="close" (click)="selectedOrder = null" aria-label="Cerrar">×</button>
+            </div>
+            <div class="detail-row">
+              <span>Cliente</span><b>{{ selectedOrder.customer }}</b>
+            </div>
+            <div class="detail-row">
+              <span>Fecha</span><b>{{ selectedOrder.date }}</b>
+            </div>
+            <div class="detail-row">
+              <span>Estado</span><b>{{ selectedOrder.status }}</b>
+            </div>
+            <div class="detail-row">
+              <span>Productos</span><b>{{ selectedOrder.items }}</b>
+            </div>
+            <div class="detail-total">
+              <span>Total</span
+              ><b>{{ selectedOrder.total | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</b>
+            </div>
+            <button class="primary full" (click)="selectedOrder = null">Listo</button>
+          </section>
+        </div>
+      }
+      @if (notice) {
+        <div class="toast" role="status">
+          {{ notice }}<button (click)="dismissNotice()" aria-label="Cerrar">×</button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

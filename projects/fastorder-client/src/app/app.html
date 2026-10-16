@@ -1,0 +1,387 @@
+<div class="app-shell" id="top" [class.dark]="darkMode">
+  <header class="topbar">
+    <a class="brand" (click)="show('menu')" href="#top" aria-label="FastOrder inicio"
+      ><span class="brand-mark">F</span
+      ><span>fast<span>order</span><small>BUENO. RÁPIDO. FELIZ.</small></span></a
+    >
+    <nav aria-label="Navegación principal">
+      <button [class.active]="view === 'menu'" (click)="show('menu')">Menú</button>
+      <button [class.active]="view === 'history'" (click)="show('history')">Mis pedidos</button>
+    </nav>
+    <div class="header-actions">
+      <button
+        class="theme-button"
+        (click)="toggleTheme()"
+        [attr.aria-label]="darkMode ? 'Activar tema claro' : 'Activar tema oscuro'"
+      >
+        {{ darkMode ? '☀' : '☾' }}
+      </button>
+      <button class="install-button compact" (click)="installApp()">
+        {{ appInstalled ? '✓' : '↓' }} <span>Descargar app</span>
+      </button>
+      <button class="cart-button" (click)="goCheckout()" aria-label="Abrir carrito">
+        🛒 <span>Tu pedido</span><b>{{ itemCount }}</b>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    @if (view === 'menu') {
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">HECHO AL MOMENTO · ENVIADO CON CARIÑO</span>
+          <h1>El antojo no<br />puede esperar<span>.</span></h1>
+          <p>Tu comida favorita, recién hecha y a un clic de distancia.</p>
+          <a class="primary" href="#catalogo" (click)="category = 'Todos'"
+            >Pedir ahora <span>↓</span></a
+          >
+        </div>
+        <div class="hero-image">
+          <img
+            src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1000&q=90"
+            alt="Hamburguesa FastOrder"
+            (error)="imageFallback($event)"
+          /><span class="hero-stamp">FRESH<br />& FAST!</span>
+        </div>
+        <div class="hero-note"><span>✳</span> PAN ARTESANAL<br />100% FRESCO</div>
+      </section>
+      <section class="catalog" id="catalogo">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">DE NUESTRA COCINA A TU MESA</span>
+            <h2>¿Qué se te antoja?</h2>
+          </div>
+          <label class="search"
+            >⌕
+            <input
+              [(ngModel)]="query"
+              placeholder="Busca tu favorito..."
+              aria-label="Buscar productos"
+          /></label>
+        </div>
+        <div class="filters" aria-label="Filtrar por categoría">
+          @for (item of categories; track item) {
+            <button [class.selected]="category === item" (click)="category = item">
+              {{ item }}
+            </button>
+          }
+        </div>
+        @if (filteredProducts.length) {
+          <div class="product-grid">
+            @for (product of filteredProducts; track product.id) {
+              <article class="product-card">
+                <button
+                  class="product-image"
+                  (click)="openProduct(product)"
+                  [attr.aria-label]="'Ver ' + product.name"
+                >
+                  <img [src]="product.image" [alt]="product.name" (error)="imageFallback($event)" />
+                  @if (product.badge) {
+                    <span class="badge">{{ product.badge }}</span>
+                  }
+                </button>
+                <div class="product-meta">
+                  <span>{{ product.category }}</span
+                  ><button (click)="openProduct(product)" aria-label="Agregar producto">+</button>
+                </div>
+                <h3>{{ product.name }}</h3>
+                <p>{{ product.description }}</p>
+                <strong>{{
+                  product.price | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE'
+                }}</strong>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="empty">
+            <span>⌕</span>
+            <h3>No encontramos ese antojo</h3>
+            <p>Prueba otra búsqueda o cambia la categoría.</p>
+          </div>
+        }
+      </section>
+      <section class="promo">
+        <span>✳</span>
+        <div>
+          <h2>Un buen día empieza con una buena burger.</h2>
+          <p>Recién preparado. Siempre.</p>
+        </div>
+        <a href="#catalogo" (click)="category = 'Hamburguesas'">Ver hamburguesas →</a>
+      </section>
+    }
+
+    @if (view === 'checkout') {
+      <section class="page">
+        <button class="back" (click)="show('menu')">← Seguir mirando</button
+        ><span class="eyebrow">YA CASI ESTÁ</span>
+        <h1>Tu pedido<span>.</span></h1>
+        @if (cart.length) {
+          <div class="checkout-layout">
+            <div class="panel">
+              <h2>
+                Tu selección <span class="count-pill">{{ itemCount }} productos</span>
+              </h2>
+              @for (line of cart; track $index) {
+                <div class="cart-line">
+                  <img
+                    [src]="line.product.image"
+                    [alt]="line.product.name"
+                    (error)="imageFallback($event)"
+                  />
+                  <div class="line-info">
+                    <b>{{ line.product.name }}</b
+                    ><small>{{
+                      line.extras.length ? line.extras.join(', ') : 'Preparado al momento'
+                    }}</small
+                    ><strong>{{
+                      (line.product.price +
+                        line.extras.reduce(
+                          (sum, name) => sum + (extras.find((e) => e.name === name)?.price ?? 0),
+                          0
+                        )) *
+                        line.quantity | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE'
+                    }}</strong>
+                  </div>
+                  <div class="quantity">
+                    <button (click)="changeQuantity($index, -1)" aria-label="Reducir cantidad">
+                      −</button
+                    ><b>{{ line.quantity }}</b
+                    ><button (click)="changeQuantity($index, 1)" aria-label="Aumentar cantidad">
+                      +
+                    </button>
+                  </div>
+                  <button
+                    class="remove"
+                    (click)="removeLine($index)"
+                    aria-label="Eliminar producto"
+                  >
+                    ×
+                  </button>
+                </div>
+              }
+            </div>
+            <div class="panel order-panel">
+              <h2>¿Cómo lo recibes?</h2>
+              <div class="delivery-options">
+                <button
+                  [class.chosen]="delivery === 'Recojo en tienda'"
+                  (click)="delivery = 'Recojo en tienda'"
+                >
+                  🏃<b>Recojo</b><small>Gratis</small></button
+                ><button [class.chosen]="delivery === 'Delivery'" (click)="delivery = 'Delivery'">
+                  🛵<b>Delivery</b><small>S/ 5.00</small>
+                </button>
+              </div>
+              <label class="field"
+                >Tu nombre<input
+                  [(ngModel)]="customerName"
+                  placeholder="Ej. Camila García"
+                  required /></label
+              ><label class="field"
+                >Teléfono<input
+                  [(ngModel)]="customerPhone"
+                  type="tel"
+                  placeholder="999 123 456"
+                  required
+              /></label>
+              @if (delivery === 'Delivery') {
+                <label class="field"
+                  >Dirección de entrega<textarea
+                    [(ngModel)]="address"
+                    rows="2"
+                    placeholder="Calle, número y distrito"
+                  ></textarea>
+                </label>
+              }
+              <div class="total-row">
+                <span>Subtotal</span
+                ><b>{{ subtotal | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</b>
+              </div>
+              <div class="total-row">
+                <span>Envío</span
+                ><b>{{
+                  delivery === 'Delivery'
+                    ? ('5' | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE')
+                    : 'Gratis'
+                }}</b>
+              </div>
+              <div class="total-row final">
+                <span>Total</span
+                ><b>{{ total | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</b>
+              </div>
+              <button class="primary full" (click)="submitOrder()">
+                Confirmar pedido <span>→</span></button
+              ><small class="demo-note">Demostración · no se procesa ningún pago</small>
+            </div>
+          </div>
+        } @else {
+          <div class="empty">
+            <span>🛒</span>
+            <h3>Tu carrito está esperando</h3>
+            <p>Agrega algo delicioso del menú para continuar.</p>
+            <button class="primary" (click)="show('menu')">Volver al menú</button>
+          </div>
+        }
+      </section>
+    }
+
+    @if (view === 'tracking') {
+      <section class="page narrow">
+        <div class="success-icon">✓</div>
+        <span class="eyebrow">¡PEDIDO CONFIRMADO!</span>
+        <h1>
+          @if (activeOrder?.status === 'Entregado') {
+            ¡Pedido entregado<span>.</span>
+          } @else {
+            ¡Ya lo estamos<br />preparando<span>!</span>
+          }
+        </h1>
+        <p class="lead">
+          Tu número de demostración es <strong>{{ activeOrder?.id }}</strong>
+        </p>
+        <div class="panel tracking-card">
+          <div class="tracking-top">
+            <div>
+              <small>ESTADO DEL PEDIDO</small>
+              <h2>{{ activeOrder?.status }}</h2>
+            </div>
+            <span class="status-tag">{{ activeOrder?.delivery || delivery }}</span>
+          </div>
+          <div class="steps">
+            <div class="step done"><span>✓</span><b>Pedido recibido</b></div>
+            <div class="step" [class.done]="activeOrder?.status !== 'Pendiente'">
+              <span>2</span><b>En preparación</b>
+            </div>
+            <div
+              class="step"
+              [class.done]="activeOrder?.status === 'Listo' || activeOrder?.status === 'Entregado'"
+            >
+              <span>3</span><b>Listo</b>
+            </div>
+            <div class="step" [class.done]="activeOrder?.status === 'Entregado'">
+              <span>4</span><b>Entregado</b>
+            </div>
+          </div>
+          <p class="order-items">{{ activeOrder?.items }}</p>
+          <button
+            class="secondary full"
+            [disabled]="activeOrder?.status === 'Entregado'"
+            (click)="advanceTracking()"
+          >
+            Simular siguiente estado</button
+          ><button class="secondary full" (click)="show('history')">Ver mis pedidos</button>
+        </div>
+        <p class="demo-note">Estado y número generados localmente para esta demostración.</p>
+      </section>
+    }
+
+    @if (view === 'history') {
+      <section class="page">
+        <span class="eyebrow">TODO EN UN SOLO LUGAR</span>
+        <h1>Mis pedidos<span>.</span></h1>
+        @if (orders.length) {
+          <div class="history-list">
+            @for (order of orders; track order.id) {
+              <article class="history-card">
+                <div class="history-head">
+                  <div>
+                    <span class="eyebrow">PEDIDO {{ order.id }}</span>
+                    <h2>{{ order.date }}</h2>
+                  </div>
+                  <span class="status-tag">{{ order.status }}</span>
+                </div>
+                <p>{{ order.delivery || 'Recojo en tienda' }} · {{ order.items }}</p>
+                <div class="history-bottom">
+                  <b>{{ order.total | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</b
+                  ><button (click)="activeOrder = order; show('tracking')">
+                    Ver seguimiento →
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="empty">
+            <span>♡</span>
+            <h3>Aún no tienes pedidos</h3>
+            <p>Cuando hagas tu primer pedido lo verás aquí.</p>
+            <button class="primary" (click)="show('menu')">Explorar menú</button>
+          </div>
+        }
+      </section>
+    }
+  </main>
+
+  <footer>
+    <a class="brand" (click)="show('menu')" href="#top"
+      ><span class="brand-mark">F</span
+      ><span>fast<span>order</span><small>BUENO. RÁPIDO. FELIZ.</small></span></a
+    ><span>Hecho con cariño, en Perú. <b>© FastOrder 2026</b></span
+    ><span class="demo-note">Experiencia de demostración</span>
+    <div class="install-area">
+      <button class="install-button" (click)="installApp()">
+        {{ appInstalled ? '✓ App instalada' : '↓ Descargar app' }}
+      </button>
+      @if (installHelp) {
+        <small role="status">{{ installHelp }}</small>
+      }
+    </div>
+  </footer>
+
+  @if (notice) {
+    <div class="toast" [class.error]="noticeError" role="status">
+      {{ notice }}<button (click)="notice = ''" aria-label="Cerrar">×</button>
+    </div>
+  }
+  @if (installHelp) {
+    <div class="toast install-toast" role="status">
+      {{ installHelp }}<button (click)="installHelp = ''" aria-label="Cerrar">×</button>
+    </div>
+  }
+  @if (selected) {
+    <div class="modal-backdrop" (click)="selected = null">
+      <section
+        class="modal"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="selected.name"
+      >
+        <button class="close" (click)="selected = null" aria-label="Cerrar">×</button
+        ><img [src]="selected.image" [alt]="selected.name" (error)="imageFallback($event)" /><span
+          class="eyebrow"
+          >{{ selected.category }}</span
+        >
+        <h2>{{ selected.name }}</h2>
+        <p>{{ selected.description }}</p>
+        @if (availableExtras.length) {
+          <div class="extras">
+            <b>Hazlo aún más rico</b>
+            @for (extra of availableExtras; track extra.name) {
+              <label
+                ><input
+                  type="checkbox"
+                  [checked]="selectedExtras.includes(extra.name)"
+                  (change)="toggleExtra(extra.name)"
+                />{{ extra.name }}
+                <span
+                  >+ {{ extra.price | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE' }}</span
+                ></label
+              >
+            }
+          </div>
+        }
+        <button class="primary full" (click)="addSelected()">
+          Agregar ·
+          {{
+            selected.price +
+              selectedExtras.reduce(
+                (sum, name) => sum + (extras.find((e) => e.name === name)?.price ?? 0),
+                0
+              ) | currency: 'PEN' : 'symbol' : '1.2-2' : 'es-PE'
+          }}
+        </button>
+      </section>
+    </div>
+  }
+</div>

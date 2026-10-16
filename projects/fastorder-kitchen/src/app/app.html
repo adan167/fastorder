@@ -1,0 +1,211 @@
+<div class="kitchen-root" [class.dark]="darkMode">
+  <div class="kitchen-layout">
+    <aside class="sidebar">
+      <a class="brand"
+        ><span class="brand-icon">F</span
+        ><span>fast<span>order</span><small>KITCHEN DISPLAY</small></span></a
+      >
+      <span class="menu-label">COMANDAS</span>
+      <button [class.active]="filter === 'Todos'" (click)="filter = 'Todos'">
+        <span>▦</span> Todas <i>{{ orders.length }}</i>
+      </button>
+      @for (status of statuses; track status) {
+        <button [class.active]="filter === status" (click)="filter = status">
+          <span>{{
+            status === 'Pendiente'
+              ? '◷'
+              : status === 'En preparación'
+                ? '♨'
+                : status === 'Listo'
+                  ? '✓'
+                  : '↗'
+          }}</span
+          >{{ status }}<i>{{ count(status) }}</i>
+        </button>
+      }
+      <div class="sidebar-bottom">
+        <div class="demo-avatar">FO</div>
+        <div>
+          <b>{{ accountName }}</b
+          ><small>Sesión de cocina</small>
+        </div>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div class="crumb">FastOrder <span>/</span> <b>Comandas</b></div>
+        <div class="top-actions">
+          <span class="demo-chip">● TURNO DEMO</span
+          ><button
+            class="theme-button"
+            (click)="toggleTheme()"
+            [attr.aria-label]="darkMode ? 'Activar tema claro' : 'Activar tema oscuro'"
+          >
+            {{ darkMode ? '☀' : '☾' }}</button
+          ><span class="divider"></span
+          ><span class="today">{{ now | date: 'HH:mm' }} · Miércoles, 14 oct</span
+          ><span class="avatar">FO</span>
+        </div>
+      </header>
+      <main>
+        <section class="intro">
+          <div>
+            <span class="eyebrow">OPERACIÓN DE COCINA · DEMOSTRACIÓN</span>
+            <h1>Comandas<span>.</span></h1>
+            <p>Hola, {{ accountName }}. Actualiza cada pedido al completar una etapa.</p>
+          </div>
+          <div class="intro-date"><i></i> TURNO ACTIVO</div>
+        </section>
+        <section class="stats">
+          <button class="stat" [class.active]="filter === 'Todos'" (click)="filter = 'Todos'">
+            <span class="stat-icon all">▦</span
+            ><span
+              ><small>TODOS</small><b>{{ orders.length }}</b></span
+            >
+          </button>
+          <button
+            class="stat"
+            [class.active]="filter === 'Pendiente'"
+            (click)="filter = 'Pendiente'"
+          >
+            <span class="stat-icon pending">◷</span
+            ><span
+              ><small>PENDIENTES</small><b>{{ count('Pendiente') }}</b></span
+            >
+          </button>
+          <button
+            class="stat"
+            [class.active]="filter === 'En preparación'"
+            (click)="filter = 'En preparación'"
+          >
+            <span class="stat-icon cooking">♨</span
+            ><span
+              ><small>EN PREPARACIÓN</small><b>{{ count('En preparación') }}</b></span
+            >
+          </button>
+          <button class="stat" [class.active]="filter === 'Listo'" (click)="filter = 'Listo'">
+            <span class="stat-icon ready">✓</span
+            ><span
+              ><small>LISTOS</small><b>{{ count('Listo') }}</b></span
+            >
+          </button>
+          <button
+            class="stat"
+            [class.active]="filter === 'Entregado'"
+            (click)="filter = 'Entregado'"
+          >
+            <span class="stat-icon delivered">↗</span
+            ><span
+              ><small>ENTREGADOS</small><b>{{ count('Entregado') }}</b></span
+            >
+          </button>
+        </section>
+        <section class="board-head">
+          <div>
+            <h2>
+              Pedidos recientes <span class="result-count">{{ visibleOrders.length }}</span>
+            </h2>
+            <p>Usa el filtro lateral o busca una comanda.</p>
+          </div>
+          <div class="controls">
+            <label class="search"
+              >⌕
+              <input
+                [(ngModel)]="search"
+                placeholder="Buscar pedido o cliente..."
+                aria-label="Buscar pedidos" /></label
+            ><select [(ngModel)]="filter" aria-label="Filtrar por estado">
+              <option>Todos</option>
+              @for (status of statuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </div>
+        </section>
+        @if (visibleOrders.length) {
+          <section class="order-grid">
+            @for (order of visibleOrders; track order.id) {
+              <article
+                class="order-card"
+                [class]="'order-card ' + order.status.toLowerCase().replace(' ', '-')"
+              >
+                <div class="card-head">
+                  <div>
+                    <span class="order-id">{{ order.id }}</span
+                    ><span
+                      class="status"
+                      [class]="'status ' + order.status.toLowerCase().replace(' ', '-')"
+                      >{{ order.status }}</span
+                    >
+                  </div>
+                  <time>◷ {{ order.time }}</time>
+                </div>
+                <div class="customer">
+                  ◉ <b>{{ order.customer }}</b
+                  ><small>Pedido para llevar</small>
+                </div>
+                <div class="items">
+                  <div class="items-title">
+                    DETALLE <span>{{ order.items.length }} ítems</span>
+                  </div>
+                  @for (item of order.items; track item.name) {
+                    <div class="item">
+                      <b>{{ item.quantity }}×</b
+                      ><span
+                        >{{ item.name }}
+                        @if (item.note) {
+                          <small>↳ {{ item.note }}</small>
+                        }
+                      </span>
+                    </div>
+                  }
+                </div>
+                <div class="card-actions">
+                  <label class="status-select"
+                    ><span>Estado</span
+                    ><select
+                      [ngModel]="order.status"
+                      (ngModelChange)="setStatus(order, $event)"
+                      [attr.aria-label]="'Estado ' + order.id"
+                    >
+                      @for (status of statuses; track status) {
+                        <option [value]="status">{{ status }}</option>
+                      }
+                    </select></label
+                  >
+                  @if (order.status !== 'Entregado') {
+                    <button class="advance" (click)="nextStatus(order)">
+                      {{ order.status === 'Listo' ? 'Marcar entregado' : 'Siguiente paso' }}
+                      <span>→</span>
+                    </button>
+                  } @else {
+                    <span class="done-label">✓ Completado</span>
+                  }
+                </div>
+              </article>
+            }
+          </section>
+        } @else {
+          <div class="empty">
+            <span>⌕</span>
+            <h3>No hay comandas que coincidan</h3>
+            <p>Prueba con otro término o cambia el filtro de estado.</p>
+            <button (click)="search = ''; filter = 'Todos'">Limpiar filtros</button>
+          </div>
+        }
+        <footer>
+          <span>● &nbsp;Panel de cocina</span
+          ><span
+            >Datos de demostración independientes · Sin sincronización automática entre
+            aplicaciones</span
+          >
+        </footer>
+      </main>
+    </div>
+    @if (notice) {
+      <div class="toast" role="status">
+        {{ notice }}<button (click)="clearNotice()" aria-label="Cerrar">×</button>
+      </div>
+    }
+  </div>
+</div>
